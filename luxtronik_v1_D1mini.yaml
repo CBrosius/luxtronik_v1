@@ -13,7 +13,7 @@ wifi:
 # Enable logging
 logger:
   # level: VERBOSE #makes uart stream available in esphome logstream
-  # disable serial loggin
+  # disable serial logging
   baud_rate: 0
   logs:
     mqtt.component: DEBUG
@@ -29,7 +29,7 @@ mqtt:
   # Optional variables:
   discovery: true
 
-# Schnittstellen-Parameter: 57600, 8, N, 1
+# Serial parameters: 57600, 8, N, 1
 uart:
   baud_rate: 57600
   rx_pin: D5
@@ -142,7 +142,7 @@ sensor:
       - name: "WP_Ausgaenge_Zweiter_Waermeerzeuger_1"
       - name: "WP_Ausgaenge_Zweiter_Waermeerzeuger_2_Sammelstoerung"
                     
-# The wifi_signal sensor platform allows you to read the signal strength of the currently connected WiFi Access Poin
+# The wifi_signal sensor platform allows you to read the signal strength of the currently connected WiFi Access Point
   - platform: wifi_signal
     name: "WiFi Signal Sensor"
     update_interval: 60s

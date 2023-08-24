@@ -8,3 +8,14 @@ HowTo:
 
 ToDo:
 - Show Measures in Webinterface
+
+# German Version
+Mit einem ESP wird eine serielle Verbindung zur Luxtronik Wärmepumpensteuerung hergestellt, Werte gelesen und diese per MQTT z.B. für die Einbindung in Home Assistant bereitgestellt.
+
+## Anleitung
+
+### Voraussetzungen
+- ESPHome Installation
+- ?
+
+### 
