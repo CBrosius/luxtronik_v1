@@ -11,6 +11,5 @@ HowTo:
 3. Compile and Upload to your Sensor
 
 ToDo:
-- ESP32-Example
 - Documentation
 - Write-Acess to some of the values
