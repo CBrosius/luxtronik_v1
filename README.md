@@ -15,6 +15,7 @@ Mit einem ESP wird eine serielle Verbindung zur Luxtronik Wärmepumpensteuerung 
 ## Anleitung
 
 ### Voraussetzungen
+- Python [Anleitung](https://esphome.io/guides/installing_esphome)
 - ESPHome Installation --> [download](https://esphome.io/)
 - ESP mittels USB verbunden (alternativ eine andere serielle Verbindung)
 
