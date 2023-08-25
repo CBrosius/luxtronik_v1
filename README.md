@@ -7,4 +7,4 @@ HowTo:
 3. Compile and Upload to your Sensor
 
 ToDo:
-- Show Measures in Webinterface
+- Documentation
