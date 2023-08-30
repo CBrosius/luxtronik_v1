@@ -93,6 +93,8 @@ sensor:
         luxtronik_v1->status_Softwareversion,
         luxtronik_v1->status_Bivalenzstufe,
         luxtronik_v1->status_Betriebszustand,
+        luxtronik_v1->modus_Heizung,
+        luxtronik_v1->modus_Warmwasser,
       };
     sensors:
       - name: "WP_Temp_Heizkreis_Ist_Vorlauftemperatur"
@@ -154,6 +156,8 @@ sensor:
       - name: "WP_Status_Softwareversion"
       - name: "WP_Status_Bivalenzstufe"
       - name: "WP_Status_Betriebszustand"
+      - name: "WP_Status_Betriebszustand"
+      - name: "WP_Modus_Heizung"
 
 # The wifi_signal sensor platform allows you to read the signal strength of the currently connected WiFi Access Poin
   - platform: wifi_signal
