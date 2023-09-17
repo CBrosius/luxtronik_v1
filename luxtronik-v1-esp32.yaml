@@ -158,6 +158,7 @@ sensor:
       - name: "WP_Status_Betriebszustand"
       - name: "WP_Status_Betriebszustand"
       - name: "WP_Modus_Heizung"
+      - name: "WP_Modus_Warmwasser"
 
 # The wifi_signal sensor platform allows you to read the signal strength of the currently connected WiFi Access Poin
   - platform: wifi_signal
