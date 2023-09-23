@@ -34,16 +34,16 @@ Eine direkte Verbindung des ESP mit der Luxtronik v1 ist wegen der unterschiedli
 
 ??Foto??
 #### D1 Mini
-ESP PIN D5 an MAX3232 RX
-ESP PIN D6 an MAX3232 TX
-ESP 3,3V an MAX3232 VCC
-ESP G an MAX3232 GND
+- ESP PIN D5 an MAX3232 RX
+- ESP PIN D6 an MAX3232 TX
+- ESP 3,3V an MAX3232 VCC
+- ESP G an MAX3232 GND
 
 #### ESP32
-ESP 3,3V an MAX3232 VCC
-ESP GND an MAX3232 GND
-ESP PIN D2 an MAX3232 RX
-ESP PIN D4 an MAX3232 TX
+- ESP 3,3V an MAX3232 VCC
+- ESP GND an MAX3232 GND
+- ESP PIN D2 an MAX3232 RX
+- ESP PIN D4 an MAX3232 TX
 
 ### Serielles Kabel
 Das serielle Kabel muss an der Luxtronik Platine angeschlossen werden. Dort gibt es einen männlichen Steckeranschluss, entsprechend muss das Kabel hier Buchsen haben. Das MAX3232-Modul hat einen weiblichen Sub-D9 Buchsenanschluss, entsprechend braucht das Kabel hier einen männlichen Stecker. Kurz das Kabel braucht an einem Ende einen männlichen und am anderen Ende einen weiblichen Sub-D9 Stecker. Solche Kabel mit richtiger Belegung sind schwer zu finden, daher basteln wir uns ein solches Kabel selbst.
@@ -63,11 +63,12 @@ Schneide den RJ45-Stecker ab und löte den separten, männlichen Sub-D9-Stecker 
 
 Info: Belegung von [Sub-D9](https://www.cable-tester.com/rs232-pin-out/).
 ### Luxtronik v1 Wartungszugang freischalten
-??
+An deiner Wärmepumpe gehe unter Einstellungen, Datenzugang die PIN 9445 für den Kundendienstzugang eingeben und bestätigen. Es passiert erstmal nix, es sind jetzt aber weitere Menüs erreichbar. Jetzt unter Einstellungen, Diagnose Standard auswählen. Damit ist die serielle Schnittstelle freigegeben. 
 
 ### secrets.yaml anlegen
 Du brauchst eine Datei secrets.yaml in der du insbesondere die Werte für das WLAN einträgst:
-```# Your Wi-Fi SSID and password
+```
+# Your Wi-Fi SSID and password
 wifi_ssid: "<SSID>"
 wifi_password: "<WPA-Key>"
 #only if you use MQTT instead of ESPHOME API
@@ -80,7 +81,7 @@ Alle anderen Werte solltest du nur ändern, wenn du weißt, was du tust. MQTT br
 
 ### ESPHome
 ESPHome ist eine Konsolenanwendung (unter Linux wie unter Windows).
-Du kopierst alle Dateien des Projektes und deine secrets.yaml in das Hauptverzeichnis von esphome unter Windows standardmäßig c:\Users\<deinName>\.
+Du kopierst alle Dateien des Projektes und deine secrets.yaml in das Hauptverzeichnis von esphome unter Windows standardmäßig c:\Users\\<deinName>\\.
 
 Hinweis: Weitere Informationen findest du unter [esphome.io](https://esphome.io/guides/getting_started_command_line)
 
@@ -91,3 +92,6 @@ Am Ende musst du auswählen, wie die Binärdatei auf den ESP kommt. Beim ersten 
 
 ### WebInterface
 Du kannst das WebInterface des ESP aufrufen und wirst die Werte der Luxtronik sehen können. Die IP-Adresse findest in deinem Router/DHCP-Server.
+
+## weitere Quellen
+- https://wiki.fhem.de/wiki/Luxtronik_1_in_FHEM
