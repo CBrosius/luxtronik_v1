@@ -1,0 +1,172 @@
+esphome:
+  name: luxtronik_v1
+  platform: ESP8266
+  board: d1_mini
+  includes:
+    - luxtronik_v1_sensor.h
+    
+wifi:
+  ssid: <WLAN-SSID>
+  password: <WLAN-PASSWORD>
+  fast_connect: true
+  
+# Enable logging
+logger:
+  # level: VERBOSE #makes uart stream available in esphome logstream
+  # disable serial logging
+  baud_rate: 0
+  logs:
+    mqtt.component: DEBUG
+  esp8266_store_log_strings_in_flash: False    
+  
+ota:
+
+web_server:
+  port: 80
+
+mqtt:
+  broker: <MQTT-BROKER-IP>
+  # Optional variables:
+  discovery: true
+
+# Serial parameters: 57600, 8, N, 1
+uart:
+  baud_rate: 57600
+  rx_pin: D5
+  tx_pin: D6
+  # baud_rate (Required, int): The baud rate of the UART bus.
+  # rx_pin (Optional, Pin): The pin to receive data on from the ESP’s perspective.
+  # tx_pin (Optional, Pin): The pin to send data to from the ESP’s perspective.
+  data_bits: 8
+  #data_bits (Optional, int): The number of data bits used on the UART bus. Options: 5 to 8. Defaults to 8.
+  #parity (Optional): The parity used on the UART bus. Options: NONE, EVEN, ODD. Defaults to NONE.
+  parity: NONE
+  #stop_bits (Optional, int): The number of stop bits to send. Options: 1, 2. Defaults to 1.
+  stop_bits: 1
+  # id (Optional, ID): Manually specify the ID for this UART hub if you need multiple UART hubs
+  id: uart_bus
+    
+
+sensor:
+  - platform: custom
+    lambda: |-
+      auto luxtronik_v1 = new luxtronik_v1_sensor(id(uart_bus));
+      App.register_component(luxtronik_v1);
+      return {
+        luxtronik_v1->temp_VL,         
+        luxtronik_v1->temp_RL,         
+        luxtronik_v1->temp_RL_Soll,
+        luxtronik_v1->temp_Heissgas,   
+        luxtronik_v1->temp_Aussen,     
+        luxtronik_v1->temp_BW,         
+        luxtronik_v1->temp_BW_Soll,    
+        luxtronik_v1->temp_WQ_Ein,     
+        luxtronik_v1->temp_Kaeltekreis,
+        luxtronik_v1->temp_MK1_Vorl,   
+        luxtronik_v1->temp_MK1VL_Soll, 
+        luxtronik_v1->temp_Raumstat,
+        luxtronik_v1->ein_Abtau_Soledruck_Durchfluss,
+        luxtronik_v1->ein_Sperrzeit_EVU,
+        luxtronik_v1->ein_Hochdruckpressostat,
+        luxtronik_v1->ein_Motorschutz,
+        luxtronik_v1->ein_Niederdruckpressostat,
+        luxtronik_v1->ein_Fremdstromanode,
+        luxtronik_v1->aus_ATV,
+        luxtronik_v1->aus_BWP,
+        luxtronik_v1->aus_FBHP,
+        luxtronik_v1->aus_HZP,
+        luxtronik_v1->aus_Mischer_1_Auf,
+        luxtronik_v1->aus_Mischer_1_Zu,
+        luxtronik_v1->aus_VentWP,
+        luxtronik_v1->aus_VentBrunnen,
+        luxtronik_v1->aus_Verdichter_1,
+        luxtronik_v1->aus_Verdichter_2,
+        luxtronik_v1->aus_ZPumpe,
+        luxtronik_v1->aus_ZWE,
+        luxtronik_v1->aus_ZWE_Stoerung
+      };
+    sensors:
+      - name: "WP_Temp_Heizkreis_Ist_Vorlauftemperatur"
+        unit_of_measurement: °C
+        accuracy_decimals: 1
+      - name: "WP_Temp_Heizkreis_Ist_Ruecklauftemperatur"
+        unit_of_measurement: °C
+        accuracy_decimals: 1
+      - name: "WP_Temp_Heizkreis_Soll_Ruecklauftemperatur"
+        unit_of_measurement: °C
+        accuracy_decimals: 1
+      - name: "WP_Temp_Heissgastemperatur"
+        unit_of_measurement: °C
+        accuracy_decimals: 1
+      - name: "WP_Temp_Aussentemperatur"
+        unit_of_measurement: °C
+        accuracy_decimals: 1
+      - name: "WP_Temp_Brauchwarmwasser_Ist_Temperatur"
+        unit_of_measurement: °C
+        accuracy_decimals: 1
+      - name: "WP_Temp_Brauchwarmwasser_Soll_Temperatur"
+        unit_of_measurement: °C
+        accuracy_decimals: 1
+      - name: "WP_Temp_Waermequellen_Eintrittstemperatur"
+        unit_of_measurement: °C
+        accuracy_decimals: 1
+      - name: "WP_Temp_Waermequellen_Austrittstemperatur"
+        unit_of_measurement: °C
+        accuracy_decimals: 1
+      - name: "WP_Temp_Mischkreis_1_Ist_Vorlauftemperatur"
+        unit_of_measurement: °C
+        accuracy_decimals: 1
+      - name: "WP_Temp_Mischkreis_1_Soll_Vorlauftemperatur"
+        unit_of_measurement: °C
+        accuracy_decimals: 1
+      - name: "WP_Temp_Raumstation"
+        unit_of_measurement: °C
+        accuracy_decimals: 1
+      - name: "WP_Eingaenge_Abtau_Soledruck_Durchfluss"
+      - name: "WP_Eingaenge_Sperrzeit_vom_EVU"
+      - name: "WP_Eingaenge_Hochdruckpressostat"
+      - name: "WP_Eingaenge_Motorschutz"
+      - name: "WP_Eingaenge_Niederdruckpressostat"
+      - name: "WP_Eingaenge_Anschluss_einer_Fremdstromanode"
+      - name: "WP_Ausgaenge_Abtauventil"
+      - name: "WP_Ausgaenge_Brauchwarmwasserumwaelzpumpe"
+      - name: "WP_Ausgaenge_Fussbodenheizungsumwaelzpumpe"
+      - name: "WP_Ausgaenge_Heizungsumwaelzpumpe"
+      - name: "WP_Ausgaenge_Mischer_1_Auf"
+      - name: "WP_Ausgaenge_Mischer_1_Zu"
+      - name: "WP_Ausgaenge_Ventilation_des_Waermepumpengehaeuses "
+      - name: "WP_Ausgaenge_Ventilator_Brunnen_oder_Soleumwaelzpumpe"
+      - name: "WP_Ausgaenge_Verdichter_1_in_Waermepumpe"
+      - name: "WP_Ausgaenge_Verdichter_2_in_Waermepumpe"
+      - name: "WP_Ausgaenge_Zusatzumwaelzpumpe_Zirkulationspumpe"
+      - name: "WP_Ausgaenge_Zweiter_Waermeerzeuger_1"
+      - name: "WP_Ausgaenge_Zweiter_Waermeerzeuger_2_Sammelstoerung"
+                    
+# The wifi_signal sensor platform allows you to read the signal strength of the currently connected WiFi Access Point
+  - platform: wifi_signal
+    name: "WiFi Signal Sensor"
+    update_interval: 60s
+
+  - platform: uptime
+    name: Uptime Sensor
+
+# The Status Binary Sensor exposes the node state (if it’s connected to via MQTT/native API) for Home Assistant
+binary_sensor:
+  - platform: status
+    name: "luxtronik_v1"
+    
+# Wifi-Information
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: ESP IP Address
+    ssid:
+      name: ESP Connected SSID
+    bssid:
+      name: ESP Connected BSSID
+    mac_address:
+      name: ESP Mac Wifi Address
+    scan_results:
+      name: ESP Latest Scan Results
+    dns_address:
+      name: ESP DNS Address

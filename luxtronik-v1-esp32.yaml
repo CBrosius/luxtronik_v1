@@ -1,13 +1,20 @@
 esphome:
-  name: luxtronik_v1
-  platform: ESP8266
-  board: d1_mini
+  name: luxtronik-v1-esp32
+  friendly_name: luxtronik-v1-esp32
   includes:
     - luxtronik_v1_sensor.h
-    
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable Home Assistant API - ESPHOME integration. API or MQTT is possible.
+api:
+
 wifi:
-  ssid: <WLAN-SSID>
-  password: <WLAN-PASSWORD>
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
   fast_connect: true
   
 # Enable logging
@@ -17,23 +24,26 @@ logger:
   baud_rate: 0
   logs:
     mqtt.component: DEBUG
-  esp8266_store_log_strings_in_flash: False    
   
 ota:
 
 web_server:
   port: 80
 
-mqtt:
-  broker: <MQTT-BROKER-IP>
-  # Optional variables:
-  discovery: true
+#MQTT is only needed if you are not using the ESP for Home Assistant. Please deactivate api: in this case.
+#mqtt:
+#  broker: !secret mqtt_broker
+#  # Optional variables:
+#  discovery: true
+#  username: !secret mqtt_user
+#  password: !secret mqtt_password
 
-# Schnittstellen-Parameter: 57600, 8, N, 1
+# UART parameters: 57600, 8, N, 1
+# GPIO2 = D2, GPIO4 = D4
 uart:
   baud_rate: 57600
-  rx_pin: D5
-  tx_pin: D6
+  rx_pin: GPIO2
+  tx_pin: GPIO4
   # baud_rate (Required, int): The baud rate of the UART bus.
   # rx_pin (Optional, Pin): The pin to receive data on from the ESP’s perspective.
   # tx_pin (Optional, Pin): The pin to send data to from the ESP’s perspective.
@@ -46,7 +56,6 @@ uart:
   # id (Optional, ID): Manually specify the ID for this UART hub if you need multiple UART hubs
   id: uart_bus
     
-
 sensor:
   - platform: custom
     lambda: |-
@@ -83,7 +92,13 @@ sensor:
         luxtronik_v1->aus_Verdichter_2,
         luxtronik_v1->aus_ZPumpe,
         luxtronik_v1->aus_ZWE,
-        luxtronik_v1->aus_ZWE_Stoerung
+        luxtronik_v1->aus_ZWE_Stoerung,
+        luxtronik_v1->status_Anlagentyp,
+        luxtronik_v1->status_Softwareversion,
+        luxtronik_v1->status_Bivalenzstufe,
+        luxtronik_v1->status_Betriebszustand,
+        luxtronik_v1->modus_Heizung,
+        luxtronik_v1->modus_Warmwasser,
       };
     sensors:
       - name: "WP_Temp_Heizkreis_Ist_Vorlauftemperatur"
@@ -141,7 +156,14 @@ sensor:
       - name: "WP_Ausgaenge_Zusatzumwaelzpumpe_Zirkulationspumpe"
       - name: "WP_Ausgaenge_Zweiter_Waermeerzeuger_1"
       - name: "WP_Ausgaenge_Zweiter_Waermeerzeuger_2_Sammelstoerung"
-                    
+      - name: "WP_Status_Anlagentyp"
+      - name: "WP_Status_Softwareversion"
+      - name: "WP_Status_Bivalenzstufe"
+      - name: "WP_Status_Betriebszustand"
+      - name: "WP_Status_Betriebszustand"
+      - name: "WP_Modus_Heizung"
+      - name: "WP_Modus_Warmwasser"
+
 # The wifi_signal sensor platform allows you to read the signal strength of the currently connected WiFi Access Poin
   - platform: wifi_signal
     name: "WiFi Signal Sensor"
@@ -153,20 +175,5 @@ sensor:
 # The Status Binary Sensor exposes the node state (if it’s connected to via MQTT/native API) for Home Assistant
 binary_sensor:
   - platform: status
-    name: "luxtronik_v1"
+    name: "luxtronik-v1-esp32"
     
-# Wifi-Information
-text_sensor:
-  - platform: wifi_info
-    ip_address:
-      name: ESP IP Address
-    ssid:
-      name: ESP Connected SSID
-    bssid:
-      name: ESP Connected BSSID
-    mac_address:
-      name: ESP Mac Wifi Address
-    scan_results:
-      name: ESP Latest Scan Results
-    dns_address:
-      name: ESP DNS Address
