@@ -108,7 +108,8 @@ Stelle eine serielle Verbindung des ESP zum PC her. Das geht am einfachsten mit 
 Am Ende musst du auswählen, wie die Binärdatei auf den ESP kommt. Beim ersten Durchlauf musst du die serielle Verbindung nutzen, weitere Änderungen kannst du "OTA" (over the air) über das WLAN auf den ESP bringen, wenn dieser online ist.
 
 #### WebInterface
-Du kannst das WebInterface des ESP aufrufen und wirst die Werte der Luxtronik sehen können. Die IP-Adresse findest in deinem Router/DHCP-Server.
+Du kannst das WebInterface des ESP aufrufen und wirst die Werte der Luxtronik sehen können. 
+Die IP-Adresse findest in deinem Router/DHCP-Server oder direkt im LOG des ESPHome-Devices.
 
 ## weitere Quellen
 - https://wiki.fhem.de/wiki/Luxtronik_1_in_FHEM
