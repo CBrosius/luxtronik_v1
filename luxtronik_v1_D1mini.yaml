@@ -6,8 +6,8 @@ esphome:
     - luxtronik_v1_sensor.h
     
 wifi:
-  ssid: <WLAN-SSID>
-  password: <WLAN-PASSWORD>
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
   fast_connect: true
   
 # Enable logging
@@ -24,12 +24,16 @@ ota:
 web_server:
   port: 80
 
-mqtt:
-  broker: <MQTT-BROKER-IP>
-  # Optional variables:
-  discovery: true
+#MQTT is only needed if you are not using the ESP for Home Assistant. Please deactivate api: in this case.
+#mqtt:
+#  broker: !secret mqtt_broker
+#  # Optional variables:
+#  discovery: true
+#  username: !secret mqtt_user
+#  password: !secret mqtt_password
 
-# Serial parameters: 57600, 8, N, 1
+# UART parameters: 57600, 8, N, 1
+# GPIO2 = D2, GPIO4 = D4
 uart:
   baud_rate: 57600
   rx_pin: D5
@@ -46,7 +50,6 @@ uart:
   # id (Optional, ID): Manually specify the ID for this UART hub if you need multiple UART hubs
   id: uart_bus
     
-
 sensor:
   - platform: custom
     lambda: |-
@@ -83,7 +86,13 @@ sensor:
         luxtronik_v1->aus_Verdichter_2,
         luxtronik_v1->aus_ZPumpe,
         luxtronik_v1->aus_ZWE,
-        luxtronik_v1->aus_ZWE_Stoerung
+        luxtronik_v1->aus_ZWE_Stoerung,
+        luxtronik_v1->status_Anlagentyp,
+        luxtronik_v1->status_Softwareversion,
+        luxtronik_v1->status_Bivalenzstufe,
+        luxtronik_v1->status_Betriebszustand,
+        luxtronik_v1->modus_Heizung,
+        luxtronik_v1->modus_Warmwasser,
       };
     sensors:
       - name: "WP_Temp_Heizkreis_Ist_Vorlauftemperatur"
@@ -141,8 +150,15 @@ sensor:
       - name: "WP_Ausgaenge_Zusatzumwaelzpumpe_Zirkulationspumpe"
       - name: "WP_Ausgaenge_Zweiter_Waermeerzeuger_1"
       - name: "WP_Ausgaenge_Zweiter_Waermeerzeuger_2_Sammelstoerung"
-                    
-# The wifi_signal sensor platform allows you to read the signal strength of the currently connected WiFi Access Point
+      - name: "WP_Status_Anlagentyp"
+      - name: "WP_Status_Softwareversion"
+      - name: "WP_Status_Bivalenzstufe"
+      - name: "WP_Status_Betriebszustand"
+      - name: "WP_Status_Betriebszustand"
+      - name: "WP_Modus_Heizung"
+      - name: "WP_Modus_Warmwasser"
+
+# The wifi_signal sensor platform allows you to read the signal strength of the currently connected WiFi Access Poin
   - platform: wifi_signal
     name: "WiFi Signal Sensor"
     update_interval: 60s
