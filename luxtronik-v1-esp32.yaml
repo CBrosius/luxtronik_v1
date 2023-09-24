@@ -9,7 +9,7 @@ esp32:
   framework:
     type: arduino
 
-# Enable Home Assistant API
+# Enable Home Assistant API - ESPHOME integration. API or MQTT is possible.
 api:
 
 wifi:
@@ -30,12 +30,16 @@ ota:
 web_server:
   port: 80
 
-mqtt:
-  broker: <MQTT-BROKER-IP>
-  # Optional variables:
-  discovery: true
+#MQTT is only needed if you are not using the ESP for Home Assistant. Please deactivate api: in this case.
+#mqtt:
+#  broker: !secret mqtt_broker
+#  # Optional variables:
+#  discovery: true
+#  username: !secret mqtt_user
+#  password: !secret mqtt_password
 
-# Schnittstellen-Parameter: 57600, 8, N, 1
+# UART parameters: 57600, 8, N, 1
+# GPIO2 = D2, GPIO4 = D4
 uart:
   baud_rate: 57600
   rx_pin: GPIO2
@@ -172,4 +176,4 @@ sensor:
 binary_sensor:
   - platform: status
     name: "luxtronik-v1-esp32"
-    
+
