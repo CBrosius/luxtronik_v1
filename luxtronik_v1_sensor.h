@@ -51,6 +51,7 @@ class luxtronik_v1_sensor : public PollingComponent, public uart::UARTDevice{
   // Status
   Sensor *status_Anlagentyp          = new Sensor();  // 1700/2
   Sensor *status_Softwareversion     = new Sensor();  // 1700/3
+  // TextSensor *status_Softwareversion = new TextSensor();  // 1700/3 -> Text -> funktioniert so aber nicht
   Sensor *status_Bivalenzstufe       = new Sensor();  // 1700/4
   Sensor *status_Betriebszustand     = new Sensor();  // 1700/5
   // Sensor *status_Startdatum_Tag      = new Sensor();  // 1700/6
@@ -354,8 +355,8 @@ class luxtronik_v1_sensor : public PollingComponent, public uart::UARTDevice{
         // Sensor Softwareversion         = new Sensor();  // 1700/3
         tmp_out = message.substr(start, end - start).c_str();
         ESP_LOGD(TAG, "Softwareversion: %s", tmp_out.c_str());
-	      // status_Softwareversion->publish_state(GetInputOutputState(tmp_out));
-	      // status_Softwareversion->publish_state(tmp_out);
+	      // status_Softwareversion->publish_state(tmp_out.c_str());
+
         start = end + 1;
         end = message.find(';', start);
         // Sensor Bivalenzstufe           = new Sensor();  // 1700/4
@@ -431,6 +432,11 @@ class luxtronik_v1_sensor : public PollingComponent, public uart::UARTDevice{
         send_cmd_("3505");
     }
 
+    if ((message.find("3406")==0)&&(message.length()>4)){
+        ESP_LOGD(TAG, "3406 found -> Program -> Heizungsmodus");
+        ESP_LOGD(TAG, "R: %s - %d", message.c_str(), 0);
+    }
+
     if ((message.find("3505")==0)&&(message.length()>4)){
         ESP_LOGD(TAG, "3505 found -> Warmwassermodus");
         ESP_LOGD(TAG, "R: %s - %d", message.c_str(), 0);
@@ -445,7 +451,31 @@ class luxtronik_v1_sensor : public PollingComponent, public uart::UARTDevice{
         tmp_in = message.substr(start, end - start).c_str();
         modus_Warmwasser->publish_state(GetInputOutputState(tmp_in));
     }
+
+    if ((message.find("3506")==0)&&(message.length()>4)){
+          ESP_LOGD(TAG, "3506 found -> Program -> Warmwassermodus");
+          ESP_LOGD(TAG, "R: %s - %d", message.c_str(), 0);
+    }
     
+    if (message.find("779")==0){ // Error during programming
+          ESP_LOGD(TAG, "779 found -> Programming Error -> Reset Programming");
+          ESP_LOGD(TAG, "R: %s - %d", message.c_str(), 0);
+          send_cmd_("3401;0");
+          send_cmd_("999");
+    }
+
+    if (message.find("777")==0){ // UART Ready
+          ESP_LOGD(TAG, "777 found -> UART is ready for input");
+    }
+
+    if (message.find("993")==0){ // SAVE successful
+          ESP_LOGD(TAG, "993 found -> Value saved");
+    }
+
+    if (message.find("999")==0){ // UART Ready
+          ESP_LOGD(TAG, "999 found -> save Value");
+    }
+
     if (message.empty())
         return;
   }
