@@ -15,14 +15,14 @@ class luxtronik_v1_sensor : public PollingComponent, public uart::UARTDevice{
   luxtronik_v1_sensor(UARTComponent *parent) : PollingComponent(60000), UARTDevice(parent) {}
 
   // Temperatures
-  Sensor *temp_VL           = new Sensor();  // Temperatur Vorlauf  -> 1100/2 
-  Sensor *temp_RL           = new Sensor();  // Temperatur Rücklauf -> 1100/3 
-  Sensor *temp_RL_Soll      = new Sensor();  // Temperatur Rücklauf-Soll -> 1100/4 
-  Sensor *temp_Heissgas     = new Sensor();  // 1100/5 
-  Sensor *temp_Aussen       = new Sensor();  // 1100/6 
-  Sensor *temp_BW           = new Sensor();  // 1100/7 
-  Sensor *temp_BW_Soll      = new Sensor();  // 1100/8 
-  Sensor *temp_WQ_Ein       = new Sensor();  // 1100/9 
+  Sensor *temp_VL           = new Sensor();  // Temperatur Vorlauf  -> 1100/2
+  Sensor *temp_RL           = new Sensor();  // Temperatur Rücklauf -> 1100/3
+  Sensor *temp_RL_Soll      = new Sensor();  // Temperatur Rücklauf-Soll -> 1100/4
+  Sensor *temp_Heissgas     = new Sensor();  // 1100/5
+  Sensor *temp_Aussen       = new Sensor();  // 1100/6
+  Sensor *temp_BW           = new Sensor();  // 1100/7
+  Sensor *temp_BW_Soll      = new Sensor();  // 1100/8
+  Sensor *temp_WQ_Ein       = new Sensor();  // 1100/9
   Sensor *temp_Kaeltekreis  = new Sensor();  // 1100/10
   Sensor *temp_MK1_Vorl     = new Sensor();  // 1100/11
   Sensor *temp_MK1VL_Soll   = new Sensor();  // 1100/12
@@ -48,6 +48,22 @@ class luxtronik_v1_sensor : public PollingComponent, public uart::UARTDevice{
   Sensor *aus_ZPumpe          = new Sensor();  // 1300/12
   Sensor *aus_ZWE             = new Sensor();  // 1300/13
   Sensor *aus_ZWE_Stoerung    = new Sensor();  // 1300/14
+  // Status
+  Sensor *status_Anlagentyp          = new Sensor();  // 1700/2
+  Sensor *status_Softwareversion     = new Sensor();  // 1700/3
+  Sensor *status_Bivalenzstufe       = new Sensor();  // 1700/4
+  Sensor *status_Betriebszustand     = new Sensor();  // 1700/5
+  // Sensor *status_Startdatum_Tag      = new Sensor();  // 1700/6
+  // Sensor *status_Startdatum_Monat    = new Sensor();  // 1700/7
+  // Sensor *status_Startdatum_Jahr     = new Sensor();  // 1700/8
+  // Sensor *status_Startuhrzeit_Std    = new Sensor();  // 1700/9
+  // Sensor *status_Startuhrzeit_Min    = new Sensor();  // 1700/10
+  // Sensor *status_Startuhrzeit_Sek    = new Sensor();  // 1700/11
+  // Sensor *status_Compact             = new Sensor();  // 1700/12
+  // Sensor *status_Comfort             = new Sensor();  // 1700/13
+  // Modi
+  Sensor *modus_Heizung     = new Sensor();  // 3405/2
+  Sensor *modus_Warmwasser  = new Sensor();  // 3505/2
 
   void loop() override{
     // Read message
@@ -78,7 +94,7 @@ class luxtronik_v1_sensor : public PollingComponent, public uart::UARTDevice{
 
   void update() override {
     // Ask for Temperatures
-    send_cmd_("1100"); 
+    send_cmd_("1100");
   }
 
  protected:
@@ -96,18 +112,20 @@ class luxtronik_v1_sensor : public PollingComponent, public uart::UARTDevice{
   }
 
   void send_cmd_(std::string message){
-    ESP_LOGV(TAG, "S: %s - %d", message.c_str(), 0);
+    ESP_LOGD(TAG, "S: %s - %d", message.c_str(), 0);
     this->write_str(message.c_str());
     this->write_byte(ASCII_CR);
     this->write_byte(ASCII_LF);
   }
 
   void parse_cmd_(std::string message){
-    ESP_LOGV(TAG, "R: %s - %d", message.c_str(), 0);
+    // ESP_LOGD(TAG, "R: %s - %d", message.c_str(), 0);
     std::string delimiter = ";";
 
-    if (message.find("1100")==0){
+    if ((message.find("1100")==0)&&(message.length()>4)){
         ESP_LOGD(TAG, "1100 found -> Temperatures");
+        ESP_LOGD(TAG, "R: %s - %d", message.c_str(), 0);
+        // ESP_LOGD(TAG, "Length: %d", message.length());
         // 1100;12;254;257;261;456;128;480;470;177;201;750;0;0
         size_t start = 5;
         size_t end = message.find(';', start);
@@ -186,11 +204,12 @@ class luxtronik_v1_sensor : public PollingComponent, public uart::UARTDevice{
         temp_Raumstat->publish_state(GetFloatTemp(tmp_Raumstat));
 
         // Nach den Temperaturen die Eingänge abfragen
-        send_cmd_("1200"); 
+        send_cmd_("1200");
     }
 
-    if (message.find("1200")==0){
+    if ((message.find("1200")==0)&&(message.length()>4)){
         ESP_LOGD(TAG, "1200 found -> Inputs");
+        ESP_LOGD(TAG, "R: %s - %d", message.c_str(), 0);
         // 1200;6;1;1;0;1;1;0
         std::string tmp_in;
         size_t start = 5;
@@ -228,11 +247,12 @@ class luxtronik_v1_sensor : public PollingComponent, public uart::UARTDevice{
         ein_Fremdstromanode->publish_state(GetInputOutputState(tmp_in));
 
         // Nach den Eingängen die Ausgänge abfragen
-        send_cmd_("1300"); 
+        send_cmd_("1300");
     }
 
-    if (message.find("1300")==0){
+    if ((message.find("1300")==0)&&(message.length()>4)){
         ESP_LOGD(TAG, "1300 found -> Outputs");
+        ESP_LOGD(TAG, "R: %s - %d", message.c_str(), 0);
         // 1300;13;0;0;1;1;0;1;0;0;0;0;0;0;0
         size_t start = 5;
         size_t end = message.find(';', start);
@@ -303,8 +323,129 @@ class luxtronik_v1_sensor : public PollingComponent, public uart::UARTDevice{
         // Sensor *aus_ZWE_Stoerung    = new Sensor();  // 1300/14
         tmp_out = message.substr(start, end - start).c_str();
         aus_ZWE_Stoerung->publish_state(GetInputOutputState(tmp_out));
+
+        // Nach den Ausgänen den Anlagenstatus abfragen
+        send_cmd_("1700");
     }
 
+    if ((message.find("1700")==0)&&(message.length()>4)){
+        ESP_LOGD(TAG, "1700 found -> Status");
+        ESP_LOGD(TAG, "R: %s - %d", message.c_str(), 0);
+        // size_t message_start = 0;
+        // size_t message_end = 50;
+	      // std::string message_out;
+	      // message_out = message.substr(message_start,message_end).c_str();
+  	    // ESP_LOGD(TAG, "Message: %s", message_out.c_str());
+        // Anlagenstatus
+        // 1700;12;2;V2.33;1;5;19;12;8;10;42;12;0;1
+	      // 1700;12;14;V2.33;1;0;19;2;22;7;29;22,0,0
+        size_t start = 5;
+        size_t end = message.find(';', start);
+        std::string tmp_out;
+        // Anzahl Elemente -> wird nicht verwendet
+        start = end + 1;
+        end = message.find(';', start);
+        // Sensor Anlagentyp              = new Sensor();  // 1700/2
+        tmp_out = message.substr(start, end - start).c_str();
+        ESP_LOGD(TAG, "Anlagentyp: %s", tmp_out.c_str());
+        status_Anlagentyp->publish_state(GetInputOutputState(tmp_out));
+        start = end + 1;
+        end = message.find(';', start);
+        // Sensor Softwareversion         = new Sensor();  // 1700/3
+        tmp_out = message.substr(start, end - start).c_str();
+        ESP_LOGD(TAG, "Softwareversion: %s", tmp_out.c_str());
+	      // status_Softwareversion->publish_state(GetInputOutputState(tmp_out));
+	      // status_Softwareversion->publish_state(tmp_out);
+        start = end + 1;
+        end = message.find(';', start);
+        // Sensor Bivalenzstufe           = new Sensor();  // 1700/4
+        tmp_out = message.substr(start, end - start).c_str();
+        ESP_LOGD(TAG, "Bivalenzstufe: %s", tmp_out.c_str());
+	      status_Bivalenzstufe->publish_state(GetInputOutputState(tmp_out));
+        start = end + 1;
+        end = message.find(';', start);
+        // Sensor Betriebszustand         = new Sensor();  // 1700/5
+        tmp_out = message.substr(start, end - start).c_str();
+        ESP_LOGD(TAG, "Betriebszustand: %s", tmp_out.c_str());
+	      status_Betriebszustand->publish_state(GetInputOutputState(tmp_out));
+        // start = end + 1;
+        //  Sensor *Startdatum_Tag      = new Sensor();  // 1700/6
+        // tmp_out = message.substr(start, end - start).c_str();
+        // status_Startdatum_Tag->publish_state(GetInputOutputState(tmp_out));
+        // start = end + 1;
+        // end = message.find(';', start);
+        //  Sensor *Startdatum_Monat    = new Sensor();  // 1700/7
+        // tmp_out = message.substr(start, end - start).c_str();
+        // status_Startdatum_Monat->publish_state(GetInputOutputState(tmp_out));
+        // start = end + 1;
+        // end = message.find(';', start);
+        //  Sensor *Startdatum_Jahr     = new Sensor();  // 1700/8
+        // tmp_out = message.substr(start, end - start).c_str();
+        // status_Startdatum_Jahr->publish_state(GetInputOutputState(tmp_out));
+        // start = end + 1;
+        // end = message.find(';', start);
+        //  Sensor *Startuhrzeit_Std    = new Sensor();  // 1700/9
+        // tmp_out = message.substr(start, end - start).c_str();
+        // status_Startuhrzeit_Std->publish_state(GetInputOutputState(tmp_out));
+        // start = end + 1;
+        // end = message.find(';', start);
+        //  Sensor *Startuhrzeit_Min    = new Sensor();  // 1700/10
+        // tmp_out = message.substr(start, end - start).c_str();
+        // status_Startuhrzeit_Min->publish_state(GetInputOutputState(tmp_out));
+        // start = end + 1;
+        // end = message.find(';', start);
+        //  Sensor *Startuhrzeit_Sek    = new Sensor();  // 1700/11
+        // tmp_out = message.substr(start, end - start).c_str();
+        // status_Startuhrzeit_Sek->publish_state(GetInputOutputState(tmp_out));
+        // start = end + 1;
+        // end = message.find(';', start);
+        //  Sensor *Compact             = new Sensor();  // 1700/12
+        // tmp_out = message.substr(start, end - start).c_str();
+        // status_Compact->publish_state(GetInputOutputState(tmp_out));
+        // start = end + 1;
+        // end = message.find(';', start);
+        //  Sensor *Comfort             = new Sensor();  // 1700/13
+        // tmp_out = message.substr(start, end - start).c_str();
+        // status_Comfort->publish_state(GetInputOutputState(tmp_out));
+
+        // Nach den Stati den Heizungsmodus abfragen
+        // Heizungsmodus
+        send_cmd_("3405");
+    }
+
+    if ((message.find("3405")==0)&&(message.length()>4)){
+        ESP_LOGD(TAG, "3405 found -> Heizungsmodus");
+        ESP_LOGD(TAG, "R: %s - %d", message.c_str(), 0);
+        // 3405;1;4
+        std::string tmp_in;
+        size_t start = 5;
+        size_t end = message.find(';', start);
+        // Anzahl Elemente -> wird nicht verwendet
+        start = end + 1;
+        end = message.find(';', start);
+        // Sensor *modus_Heizung     = new Sensor();  // 3405/2
+        tmp_in = message.substr(start, end - start).c_str();
+        modus_Heizung->publish_state(GetInputOutputState(tmp_in));
+
+        // Nach dem Heizungsmodus den Warmwassermodus abfragen
+        send_cmd_("3505");
+    }
+
+    if ((message.find("3505")==0)&&(message.length()>4)){
+        ESP_LOGD(TAG, "3505 found -> Warmwassermodus");
+        ESP_LOGD(TAG, "R: %s - %d", message.c_str(), 0);
+        // 3505;1;0
+        std::string tmp_in;
+        size_t start = 5;
+        size_t end = message.find(';', start);
+        // Anzahl Elemente -> wird nicht verwendet
+        start = end + 1;
+        end = message.find(';', start);
+        //  Sensor *modus_Warmwasser  = new Sensor();  // 3505/2
+        tmp_in = message.substr(start, end - start).c_str();
+        modus_Warmwasser->publish_state(GetInputOutputState(tmp_in));
+    }
+    
     if (message.empty())
         return;
   }
@@ -313,3 +454,4 @@ class luxtronik_v1_sensor : public PollingComponent, public uart::UARTDevice{
 };
 
 } // namespace esphome
+

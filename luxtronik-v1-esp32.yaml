@@ -176,4 +176,4 @@ sensor:
 binary_sensor:
   - platform: status
     name: "luxtronik-v1-esp32"
-    
+
