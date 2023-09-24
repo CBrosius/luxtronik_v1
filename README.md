@@ -112,4 +112,9 @@ Du kannst das WebInterface des ESP aufrufen und wirst die Werte der Luxtronik se
 
 ## weitere Quellen
 - https://wiki.fhem.de/wiki/Luxtronik_1_in_FHEM
+- https://homematic-forum.de/forum/viewtopic.php?t=38814 
+- https://knx-user-forum.de/forum/%C3%B6ffentlicher-bereich/knx-eib-forum/38901-%E2%88%9A-alpha-innotec-luxtronic-serielle-verbindung 
+- http://www.hoerndlein.de/cms/index.php/openhab/8-einbindung-der-luxtronik-1-in-openhab
+- https://bitbucket.org/tobylorenz/ait_luxtronik/src/master/
+- https://www.haustechnikdialog.de/Forum/t/82258/Alpha-InnoTec-Anschluss-am-PC-klappt-nicht?page=23 
 
