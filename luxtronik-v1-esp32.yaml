@@ -41,7 +41,10 @@ web_server:
 # UART parameters: 57600, 8, N, 1
 # GPIO2 = D2, GPIO4 = D4
 uart:
+  id: uart_bus
+  # debug:
   baud_rate: 57600
+  # UART1
   rx_pin: GPIO2
   tx_pin: GPIO4
   # baud_rate (Required, int): The baud rate of the UART bus.
@@ -54,10 +57,150 @@ uart:
   #stop_bits (Optional, int): The number of stop bits to send. Options: 1, 2. Defaults to 1.
   stop_bits: 1
   # id (Optional, ID): Manually specify the ID for this UART hub if you need multiple UART hubs
-  id: uart_bus
-    
+
+
+# Example configuration entry
+globals:
+  - id: global_heizungstate
+    type: int
+    restore_value: no
+    initial_value: '7'
+  - id: global_warmwasserstate
+    type: int
+    restore_value: no
+    initial_value: '7'
+
+button:
+  - platform: template
+    name: Ask for Values
+    id: ask_for_values
+    on_press:
+      then:
+        - uart.write:
+            data: "1100\r\n"
+  - platform: template
+    name: Ask for Heizung State
+    id: ask_for_heizung
+    on_press:
+      then:
+        - uart.write:
+            data: "3405\r\n"
+  - platform: template
+    name: CheckUART
+    id: check_uart
+    on_press:
+      then:
+        - uart.write:
+            data: "\r\n"
+  - platform: template
+    name: Exit ProgramModeAndSave
+    id: exit_programmode_and_save
+    on_press:
+      then:
+        - uart.write:
+            data: "3401;0\r\n999\r\n"
+  - platform: template
+    name: uart Exit ProgramMode
+    id: uart_exit_programmode
+    on_press:
+      then:
+        - uart.write:
+            data: "3401;0\r\n"
+  - platform: template
+    name: uartSave
+    id: uart_save
+    on_press:
+      then:
+        - uart.write:
+            data: "999\r\n"
+
+number:
+  - platform: template
+    min_value: 40
+    step: 1
+    max_value: 75
+    id: WP_Temp_Brauchwarmwasser_SetSoll
+    name: WP_Temp_Brauchwarmwasser_SetSoll
+    optimistic: true
+
+select:
+  - platform: template
+    name: Mode Heizung
+    id: mode_heizung
+    options:
+    - "Auto"
+    - "ZWE"
+    - "Party"
+    - "Ferien" # laut gefundener Doku aktuell nicht implementiert
+    - "aus"
+    - "N/A"
+    initial_option: "N/A"
+    optimistic: true
+    on_value:
+      then:
+        - lambda: |-
+            ESP_LOGD(TAG, "global_heizungstate: %d", id(global_heizungstate));
+            if(i != id(global_heizungstate)){
+              ESP_LOGD(TAG, "global_heizungstate wird gesetzt: %d", i);
+              id(global_heizungstate) = i;
+              auto call = id(mode_heizung).make_call();
+              call.set_index(i);
+              call.perform();
+            }else{
+              ESP_LOGD(TAG, "no change needed");
+            }
+
+  - platform: template
+    name: Mode Warmwasser
+    id: mode_warmwasser
+    options:
+    - "Auto"
+    - "ZWE"
+    - "Party"
+    - "Ferien"
+    - "aus"
+    - "N/A"
+    initial_option: "N/A"
+    optimistic: true
+    on_value:
+      then:
+        - if:
+            condition:
+              # Should return either true or false
+              lambda: |-
+                return (i != id(global_warmwasserstate));
+            then:
+              - logger.log:
+                    format: "select.mode_warmwasser.OnValue: Chosen option: %d"
+                    args: [i]
+              - globals.set: 
+                  id: global_warmwasserstate
+                  value: !lambda "return i;"
+              - uart.write:
+                  data: "3506;1;0\r\n"
+              # 
+              # - uart.write:
+              #     data: "3506;1;0\r\n"
+              # - uart.write:
+              #     data: "999\r\n"
+
+            else:
+              - logger.log: "select.mode_warmwasser.OnValue: no change needed"
+        # - lambda: |-
+        #     ESP_LOGD(TAG, "global_warmwasserstate: %d", id(global_warmwasserstate));
+        #     if(i != id(global_warmwasserstate)){
+        #       ESP_LOGD(TAG, "global_warmwasserstate wird gesetzt: %d", i);
+        #       id(global_warmwasserstate) = i;
+        #       auto call = id(mode_warmwasser).make_call();
+        #       call.set_index(i);
+        #       call.perform();
+        #     }else{
+        #       ESP_LOGD(TAG, "no change needed");
+        #     }
+      
 sensor:
   - platform: custom
+    id: luxtronik_v1
     lambda: |-
       auto luxtronik_v1 = new luxtronik_v1_sensor(id(uart_bus));
       App.register_component(luxtronik_v1);
@@ -104,39 +247,68 @@ sensor:
       - name: "WP_Temp_Heizkreis_Ist_Vorlauftemperatur"
         unit_of_measurement: °C
         accuracy_decimals: 1
+        device_class: "temperature"
+        state_class: "measurement"
       - name: "WP_Temp_Heizkreis_Ist_Ruecklauftemperatur"
         unit_of_measurement: °C
         accuracy_decimals: 1
+        device_class: "temperature"
+        state_class: "measurement"
       - name: "WP_Temp_Heizkreis_Soll_Ruecklauftemperatur"
         unit_of_measurement: °C
         accuracy_decimals: 1
+        device_class: "temperature"
+        state_class: "measurement"
       - name: "WP_Temp_Heissgastemperatur"
         unit_of_measurement: °C
         accuracy_decimals: 1
+        device_class: "temperature"
+        state_class: "measurement"
       - name: "WP_Temp_Aussentemperatur"
         unit_of_measurement: °C
         accuracy_decimals: 1
+        device_class: "temperature"
+        state_class: "measurement"
       - name: "WP_Temp_Brauchwarmwasser_Ist_Temperatur"
         unit_of_measurement: °C
         accuracy_decimals: 1
+        device_class: "temperature"
+        state_class: "measurement"
       - name: "WP_Temp_Brauchwarmwasser_Soll_Temperatur"
         unit_of_measurement: °C
         accuracy_decimals: 1
+        device_class: "temperature"
+        state_class: "measurement"
+        on_value: 
+          then:
+            - number.set: 
+                id: WP_Temp_Brauchwarmwasser_SetSoll
+                value: !lambda "return x;"
       - name: "WP_Temp_Waermequellen_Eintrittstemperatur"
         unit_of_measurement: °C
         accuracy_decimals: 1
+        device_class: "temperature"
+        state_class: "measurement"
       - name: "WP_Temp_Waermequellen_Austrittstemperatur"
         unit_of_measurement: °C
         accuracy_decimals: 1
+        device_class: "temperature"
+        state_class: "measurement"
       - name: "WP_Temp_Mischkreis_1_Ist_Vorlauftemperatur"
         unit_of_measurement: °C
         accuracy_decimals: 1
+        device_class: "temperature"
+        state_class: "measurement"
       - name: "WP_Temp_Mischkreis_1_Soll_Vorlauftemperatur"
         unit_of_measurement: °C
         accuracy_decimals: 1
+        device_class: "temperature"
+        state_class: "measurement"
       - name: "WP_Temp_Raumstation"
         unit_of_measurement: °C
         accuracy_decimals: 1
+        device_class: "temperature"
+        state_class: "measurement"
       - name: "WP_Eingaenge_Abtau_Soledruck_Durchfluss"
       - name: "WP_Eingaenge_Sperrzeit_vom_EVU"
       - name: "WP_Eingaenge_Hochdruckpressostat"
@@ -160,9 +332,55 @@ sensor:
       - name: "WP_Status_Softwareversion"
       - name: "WP_Status_Bivalenzstufe"
       - name: "WP_Status_Betriebszustand"
-      - name: "WP_Status_Betriebszustand"
       - name: "WP_Modus_Heizung"
+        on_value:
+          then:
+            - lambda: |-
+                ESP_LOGD(TAG, "WP_Modus_Heizung->OnValue");
+                ESP_LOGD(TAG, "global_heizungstate: %d", id(global_heizungstate));
+                ESP_LOGD(TAG, "value: %f", x);
+                if(x != id(global_heizungstate)){
+                  ESP_LOGD(TAG, "global_heizungstate wird gesetzt: %f", x);
+                  id(global_heizungstate) = x;
+                  auto call = id(mode_heizung).make_call();
+                  call.set_index(x);
+                  call.perform();
+                }else{
+                  ESP_LOGD(TAG, "no change needed");
+                }
       - name: "WP_Modus_Warmwasser"
+        on_value:
+          then:
+            - if:
+                condition:
+                  # Should return either true or false
+                  lambda: |-
+                    return (x != id(global_warmwasserstate));
+                then:
+                  - logger.log:
+                        format: "WP_Modus_Warmwasser.OnValue: Chosen option: %f"
+                        args: [x]
+                  - globals.set: 
+                      id: global_warmwasserstate
+                      value: !lambda "return x;"
+                  - select.set_index: 
+                      id: mode_warmwasser
+                      index: !lambda "return x;"
+                else:
+                  - logger.log: "WP_Modus_Warmwasser.OnValue: no change needed"
+            # - lambda: |-
+            #     ESP_LOGD(TAG, "WP_Modus_Warmwasser->OnValue");
+            #     ESP_LOGD(TAG, "global_warmwasserstate: %d", id(global_warmwasserstate));
+            #     ESP_LOGD(TAG, "value: %f", x);
+            #     if(x != id(global_warmwasserstate)){
+            #       ESP_LOGD(TAG, "global_warmwasserstate wird gesetzt: %f", x);
+            #       id(global_warmwasserstate) = x;
+            #       auto call = id(mode_warmwasser).make_call();
+            #       call.set_index(x);
+            #       call.perform();
+            #     }else{
+            #       ESP_LOGD(TAG, "no change needed");
+            #     }
 
 # The wifi_signal sensor platform allows you to read the signal strength of the currently connected WiFi Access Poin
   - platform: wifi_signal
@@ -177,3 +395,18 @@ binary_sensor:
   - platform: status
     name: "luxtronik-v1-esp32"
 
+# Wifi-Information
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: ESP IP Address
+    ssid:
+      name: ESP Connected SSID
+    bssid:
+      name: ESP Connected BSSID
+    mac_address:
+      name: ESP Mac Wifi Address
+    scan_results:
+      name: ESP Latest Scan Results
+    dns_address:
+      name: ESP DNS Address
