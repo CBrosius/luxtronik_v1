@@ -42,8 +42,8 @@ web_server:
 # GPIO2 = D2, GPIO4 = D4
 uart:
   baud_rate: 57600
-  rx_pin: GPIO2
-  tx_pin: GPIO4
+  rx_pin: GPIO16
+  tx_pin: GPIO17
   # baud_rate (Required, int): The baud rate of the UART bus.
   # rx_pin (Optional, Pin): The pin to receive data on from the ESP’s perspective.
   # tx_pin (Optional, Pin): The pin to send data to from the ESP’s perspective.
