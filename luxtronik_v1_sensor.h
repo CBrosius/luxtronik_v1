@@ -352,10 +352,10 @@ class luxtronik_v1_sensor : public PollingComponent, public uart::UARTDevice{
         start = end + 1;
         end = message.find(';', start);
         // Sensor Softwareversion         = new Sensor();  // 1700/3
-        tmp_out = message.substr(start, end - start).c_str();
+        tmp_out = message.substr(start + 2, end - start - 2).c_str();
         ESP_LOGD(TAG, "Softwareversion: %s", tmp_out.c_str());
-	      // status_Softwareversion->publish_state(GetInputOutputState(tmp_out));
-	      // status_Softwareversion->publish_state(tmp_out);
+        status_Softwareversion->set_accuracy_decimals(2);
+        status_Softwareversion->publish_state(GetFloatTemp(tmp_out)*10);
         start = end + 1;
         end = message.find(';', start);
         // Sensor Bivalenzstufe           = new Sensor();  // 1700/4
