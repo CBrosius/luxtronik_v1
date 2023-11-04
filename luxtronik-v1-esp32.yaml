@@ -160,7 +160,6 @@ sensor:
       - name: "WP_Status_Softwareversion"
       - name: "WP_Status_Bivalenzstufe"
       - name: "WP_Status_Betriebszustand"
-      - name: "WP_Status_Betriebszustand"
       - name: "WP_Modus_Heizung"
       - name: "WP_Modus_Warmwasser"
 
