@@ -52,8 +52,31 @@ Eine direkte Verbindung des ESP mit der Luxtronik v1 ist wegen der unterschiedli
 - ESP PIN TX2 (GPIO17) an MAX3232 TX
 
 ### Serielles Kabel
-Das serielle Kabel muss an der Luxtronik Platine angeschlossen werden. Dort gibt es einen männlichen Steckeranschluss, entsprechend muss das Kabel hier Buchsen haben. Das MAX3232-Modul hat einen weiblichen Sub-D9 Buchsenanschluss, entsprechend braucht das Kabel hier einen männlichen Stecker. Kurz das Kabel braucht an einem Ende einen männlichen und am anderen Ende einen weiblichen Sub-D9 Stecker. Solche Kabel mit richtiger Belegung sind schwer zu finden, daher basteln wir uns ein solches Kabel selbst.
+Das serielle Kabel muss an der Luxtronik Platine angeschlossen werden. Dort gibt es einen männlichen Steckeranschluss (male), entsprechend muss das Kabel hier Buchsen (female) haben. Das MAX3232-Modul hat einen weiblichen Sub-D9 Buchsenanschluss (female), entsprechend braucht das Kabel hier einen männlichen Stecker (male). Kurz das Kabel braucht an einem Ende einen männlichen/male und am anderen Ende einen weiblichen/female Sub-D9 Stecker. Solche Kabel mit richtiger Belegung sind schwer zu finden, daher basteln wir uns ein solches Kabel selbst.
 
+#### Allgemeine RS232 Belegung
+Das serielle Kabel muss wie folgt belegt sein:
+- Buchse: 
+  - Pin 2 = TX
+  - Pin 3 = RX
+  - Pin 5 = GND / Erde
+- Stecker: 
+  - Pin 2 = RX / Receive
+  - Pin 3 = TX / Transmit
+  - Pin 5 = GND / Erde
+
+Beim Blick auf den Stecker bzw. die Buchse sind die Pins bei Buchse und Stecker an unterschiedlichen Stellen. Bei der Buchse sind die Pins 1- 5 die obere/breite Reihe von links nach rechts, beim Stecker von rechts nach links.
+
+**Hinweis** Einen Genderchanger - also ein Zwischenstecker, der z.B. aus einer weiblichen Buchse einen männlichen Stecker macht - setzt man ein, wenn man z.B. nur zwei weibliche Stecker zur Verfügung hat. Dieser Genderchanger tauscht üblicherweise RX & TX. Wenn du einen Genderchanger einsetzt, musst du das bei der Belegung des Kabels beachten.
+
+#### Variante lötfreies Kabel
+Die vorhandenen seriellen Kabel habe oft sehr dünne Litzen und sind entsprechend sensibel, was Zugbelastungen angeht. Möglicherweise möchtest du den ESP einige Meter entfernt von der Wärmepumpe betreiben, weil dort der WLAN-Empfang besser ist und brauchst daher eine entsprechend langes serielles Kabel.
+Der Vorteil dieser Variante ist, dass als Kabel "Klingeldraht" verwendet werden kann und nicht gelötet werden muss.
+Materialliste:
+- dreiadriges Kabel in gewünschter Länge
+- Sub-D9-Stecker lötfrei [Internetsuche](https://www.google.com/search?q=breakout+db9+connector+male)
+- Sub-D9-Buchse lötfrei [Internetsuche](https://www.google.com/search?q=breakout+db9+connector+female)
+#### Variante Cisco Konsolkabel
 Ausgangspunkt ist ein Cisco Konsolkabel Sub-D9 auf RJ45, wie es für die Konfiguration von Netzwerkkomponenten des Herstellers zum Einsatz kommt - das ist kein MUSS, es funktioniert auch mit jedem beliebigen anderen Kabel.
 Vom Sub-D9-Stecker werden von nur die PINs ??5 (RX), 6 (TX) und 4 (GND) benötigt. Diese haben folgende Kabelfarben:
 - SubD9-PIN2, TX = rot
