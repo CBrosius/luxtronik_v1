@@ -48,8 +48,8 @@ Eine direkte Verbindung des ESP mit der Luxtronik v1 ist wegen der unterschiedli
 #### ESP32
 - ESP 3,3V an MAX3232 VCC
 - ESP GND an MAX3232 GND
-- ESP PIN D2 an MAX3232 RX
-- ESP PIN D4 an MAX3232 TX
+- ESP PIN RX2 (GPIO16) an MAX3232 RX 
+- ESP PIN TX2 (GPIO17) an MAX3232 TX
 
 ### Serielles Kabel
 Das serielle Kabel muss an der Luxtronik Platine angeschlossen werden. Dort gibt es einen männlichen Steckeranschluss, entsprechend muss das Kabel hier Buchsen haben. Das MAX3232-Modul hat einen weiblichen Sub-D9 Buchsenanschluss, entsprechend braucht das Kabel hier einen männlichen Stecker. Kurz das Kabel braucht an einem Ende einen männlichen und am anderen Ende einen weiblichen Sub-D9 Stecker. Solche Kabel mit richtiger Belegung sind schwer zu finden, daher basteln wir uns ein solches Kabel selbst.
