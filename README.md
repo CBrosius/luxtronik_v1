@@ -74,6 +74,8 @@ Materialliste:
 - Sub-D9-Stecker lötfrei [Internetsuche](https://www.google.com/search?q=breakout+db9+connector+male)
 - Sub-D9-Buchse lötfrei [Internetsuche](https://www.google.com/search?q=breakout+db9+connector+female)
 
+![Db9-Lötfrei](db9-solderless.jpg)
+
 #### Variante Cisco Konsolkabel
 Ausgangspunkt ist ein Cisco Konsolkabel Sub-D9 auf RJ45, wie es für die Konfiguration von Netzwerkkomponenten des Herstellers zum Einsatz kommt - das ist kein MUSS, es funktioniert auch mit jedem beliebigen anderen Kabel.
 Vom Sub-D9-Stecker werden von nur die PINs ??5 (RX), 6 (TX) und 4 (GND) benötigt. Diese haben folgende Kabelfarben:
