@@ -38,7 +38,7 @@ Die Luxtronik verwendet 5V Pegel, während der ESP 3,3V Pegel verwendet, daher b
 ### ESP an MAX3232
 Eine direkte Verbindung des ESP mit der Luxtronik v1 ist wegen der unterschiedlichen Spannungen nicht erfolgreich. Daher werden die PINs aus der ESP-Konfiguration mit dem MAX3232 verbunden. 
 
-![luxtronik-esphome_Steckplatine](https://github.com/optimismus/luxtronik_v1/assets/16720046/2aa45ad3-bc5a-492d-bca8-580a3bfd1155)
+![luxtronik-esphome_Steckplatine](luxtronik-esphome_Steckplatine.jpg)
 #### D1 Mini
 - ESP PIN D5 an MAX3232 RX
 - ESP PIN D6 an MAX3232 TX
