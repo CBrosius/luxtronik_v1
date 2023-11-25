@@ -40,7 +40,6 @@ web_server:
 #  password: !secret mqtt_password
 
 # UART parameters: 57600, 8, N, 1
-# GPIO2 = D2, GPIO4 = D4
 uart:
   # id (Optional, ID): Manually specify the ID for this UART hub if you need multiple UART hubs
   id: uart_bus
@@ -49,9 +48,9 @@ uart:
   baud_rate: 57600
   # UART1
   # rx_pin (Optional, Pin): The pin to receive data on from the ESP’s perspective.
-  rx_pin: GPIO2
+  rx_pin: GPIO16
   # tx_pin (Optional, Pin): The pin to send data to from the ESP’s perspective.
-  tx_pin: GPIO4
+  tx_pin: GPIO17
   #data_bits (Optional, int): The number of data bits used on the UART bus. Options: 5 to 8. Defaults to 8.
   data_bits: 8
   #parity (Optional): The parity used on the UART bus. Options: NONE, EVEN, ODD. Defaults to NONE.
