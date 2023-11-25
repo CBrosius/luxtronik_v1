@@ -51,7 +51,6 @@ class luxtronik_v1_sensor : public PollingComponent, public uart::UARTDevice{
   // Status
   Sensor *status_Anlagentyp          = new Sensor();  // 1700/2
   Sensor *status_Softwareversion     = new Sensor();  // 1700/3
-  // TextSensor *status_Softwareversion = new TextSensor();  // 1700/3 -> Text -> funktioniert so aber nicht
   Sensor *status_Bivalenzstufe       = new Sensor();  // 1700/4
   Sensor *status_Betriebszustand     = new Sensor();  // 1700/5
   // Sensor *status_Startdatum_Tag      = new Sensor();  // 1700/6
@@ -353,9 +352,10 @@ class luxtronik_v1_sensor : public PollingComponent, public uart::UARTDevice{
         start = end + 1;
         end = message.find(';', start);
         // Sensor Softwareversion         = new Sensor();  // 1700/3
-        tmp_out = message.substr(start, end - start).c_str();
+        tmp_out = message.substr(start + 2, end - start - 2).c_str();
         ESP_LOGD(TAG, "Softwareversion: %s", tmp_out.c_str());
-	      // status_Softwareversion->publish_state(tmp_out.c_str());
+        status_Softwareversion->set_accuracy_decimals(2);
+        status_Softwareversion->publish_state(GetFloatTemp(tmp_out)*10);
 
         start = end + 1;
         end = message.find(';', start);
