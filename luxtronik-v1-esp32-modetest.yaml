@@ -1,0 +1,129 @@
+esphome:
+  name: luxtronik-v1-esp32-modetest
+  friendly_name: luxtronik-v1-esp32-modetest
+  includes:
+    - luxtronik_v1_sensor.h
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "acywvlfzNxkWSxMhRAAY7w33yxRcNedCKKLjkQ+wMYM="
+
+ota:
+  password: "b63b652c7c5d799ae92480901b4f82db"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: true
+
+# Enable logging
+logger:
+  # level: VERBOSE #makes uart stream available in esphome logstream
+  # disable serial loggin
+  baud_rate: 0
+  
+web_server:
+  port: 80
+
+# UART-Parameter: 57600, 8, N, 1
+uart:
+  id: uart_bus
+  # debug:
+  baud_rate: 57600
+  # UART1
+  rx_pin: GPIO2
+  tx_pin: GPIO4
+  # baud_rate (Required, int): The baud rate of the UART bus.
+  # rx_pin (Optional, Pin): The pin to receive data on from the ESP’s perspective.
+  # tx_pin (Optional, Pin): The pin to send data to from the ESP’s perspective.
+  data_bits: 8
+  #data_bits (Optional, int): The number of data bits used on the UART bus. Options: 5 to 8. Defaults to 8.
+  #parity (Optional): The parity used on the UART bus. Options: NONE, EVEN, ODD. Defaults to NONE.
+  parity: NONE
+  #stop_bits (Optional, int): The number of stop bits to send. Options: 1, 2. Defaults to 1.
+  stop_bits: 1
+  # id (Optional, ID): Manually specify the ID for this UART hub if you need multiple UART hubs
+
+button:
+  - platform: template
+    name: Ask for Warmwasser State
+    id: ask_for_warmwasser
+    on_press:
+      then:
+        - uart.write:
+            data: "3505\r\n"
+  - platform: template
+    name: CheckUART
+    id: check_uart
+    on_press:
+      then:
+        - uart.write:
+            data: "\r\n"
+  - platform: template
+    name: Exit ProgramModeAndSave
+    id: exit_programmode_and_save
+    on_press:
+      then:
+        - uart.write:
+            data: "3401;0\r\n999\r\n"
+  - platform: template
+    name: uart Exit ProgramMode
+    id: uart_exit_programmode
+    on_press:
+      then:
+        - uart.write:
+            data: "3401;0\r\n"
+  - platform: template
+    name: uartSave
+    id: uart_save
+    on_press:
+      then:
+        - uart.write:
+            data: "999\r\n"
+
+select:
+  - platform: template
+    name: Mode Warmwasser
+    id: mode_warmwasser
+    options:
+    - "Auto"
+    - "ZWE"
+    - "Party"
+    - "Ferien"
+    - "aus"
+    - "N/A"
+    initial_option: "N/A"
+    optimistic: true
+    on_value:
+      then:
+        - logger.log:
+            format: "select.OnValue: Chosen option: %s (index %d)"
+            args: ["x.c_str()", "i"]
+    set_action:
+      - logger.log:
+          format: "select.SetAction: Chosen option: %s"
+          args: ["x.c_str()"]
+      
+sensor:
+  - platform: custom
+    id: luxtronik_v1
+    lambda: |-
+      auto luxtronik_v1 = new luxtronik_v1_sensor(id(uart_bus));
+      App.register_component(luxtronik_v1);
+      return {
+        luxtronik_v1->modus_Warmwasser,
+      };
+    sensors:
+      - name: "WP_Modus_Warmwasser"
+        on_value: 
+          then:
+            - select.set_index: 
+                id: mode_warmwasser
+                index: !lambda "return x;"
+
