@@ -1,13 +1,13 @@
 esphome:
-  name: luxtronik_v1
+  name: "luxtronik_v1_D1mini"
   platform: ESP8266
   board: d1_mini
   includes:
     - luxtronik_v1_sensor.h
     
 wifi:
-  ssid: <WLAN-SSID>
-  password: <WLAN-PASSWORD>
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
   fast_connect: true
   
 # Enable logging
@@ -16,39 +16,165 @@ logger:
   # disable serial logging
   baud_rate: 0
   logs:
-    mqtt.component: DEBUG
   esp8266_store_log_strings_in_flash: False    
+# uncomment if you want to enable mqtt debugging
+#    mqtt.component: DEBUG
   
 ota:
 
 web_server:
   port: 80
 
-mqtt:
-  broker: <MQTT-BROKER-IP>
-  # Optional variables:
-  discovery: true
+#MQTT is only needed if you are not using the ESP for Home Assistant. Please deactivate api: in this case.
+#mqtt:
+#  broker: !secret mqtt_broker
+#  # Optional variables:
+#  discovery: true
+#  username: !secret mqtt_user
+#  password: !secret mqtt_password
 
-# Serial parameters: 57600, 8, N, 1
+# UART parameters: 57600, 8, N, 1
 uart:
-  baud_rate: 57600
-  rx_pin: D5
-  tx_pin: D6
+  # id (Optional, ID): Manually specify the ID for this UART hub if you need multiple UART hubs
+  id: uart_bus
+  # debug:
   # baud_rate (Required, int): The baud rate of the UART bus.
+  baud_rate: 57600
   # rx_pin (Optional, Pin): The pin to receive data on from the ESP’s perspective.
+  rx_pin: D5
   # tx_pin (Optional, Pin): The pin to send data to from the ESP’s perspective.
-  data_bits: 8
+  tx_pin: D6
   #data_bits (Optional, int): The number of data bits used on the UART bus. Options: 5 to 8. Defaults to 8.
+  data_bits: 8
   #parity (Optional): The parity used on the UART bus. Options: NONE, EVEN, ODD. Defaults to NONE.
   parity: NONE
   #stop_bits (Optional, int): The number of stop bits to send. Options: 1, 2. Defaults to 1.
   stop_bits: 1
-  # id (Optional, ID): Manually specify the ID for this UART hub if you need multiple UART hubs
-  id: uart_bus
-    
 
+
+# Example configuration entry
+globals:
+  - id: global_heizungstate
+    type: int
+    restore_value: no
+    initial_value: '7'
+  - id: global_warmwasserstate
+    type: int
+    restore_value: no
+    initial_value: '7'
+
+button:
+  - platform: template
+    name: Ask for Values
+    id: ask_for_values
+    on_press:
+      then:
+        - uart.write:
+            data: "1100\r\n"
+  - platform: template
+    name: CheckUART
+    id: check_uart
+    on_press:
+      then:
+        - uart.write:
+            data: "\r\n"
+  - platform: template
+    name: Exit ProgramModeAndSave
+    id: exit_programmode_and_save
+    on_press:
+      then:
+        - uart.write:
+            data: "3401;0\r\n999\r\n"
+  - platform: template
+    name: uart Exit ProgramMode
+    id: uart_exit_programmode
+    on_press:
+      then:
+        - uart.write:
+            data: "3401;0\r\n"
+  - platform: template
+    name: uartSave
+    id: uart_save
+    on_press:
+      then:
+        - uart.write:
+            data: "999\r\n"
+
+number:
+  - platform: template
+    min_value: 40
+    step: 1
+    max_value: 75
+    id: WP_Temp_Brauchwarmwasser_SetSoll
+    name: WP_Temp_Brauchwarmwasser_SetSoll
+    optimistic: true
+
+select:
+  - platform: template
+    name: Mode Heizung
+    id: mode_heizung
+    options:
+    - "Auto"
+    - "ZWE"
+    - "Party"
+    - "Ferien" # laut gefundener Doku nicht in Firmware implementiert
+    - "aus"
+    - "N/A"
+    initial_option: "N/A"
+    optimistic: true
+  - platform: template
+    name: Mode Warmwasser
+    id: mode_warmwasser
+    options:
+    - "Auto"
+    - "ZWE"
+    - "Party"
+    - "Ferien"
+    - "aus"
+    - "N/A"
+    initial_option: "N/A"
+    optimistic: true
+    on_value:
+      then:
+        - if:
+            condition:
+              # Should return either true or false
+              lambda: |-
+                return (i != id(global_warmwasserstate));
+            then:
+              - logger.log:
+                    format: "select.mode_warmwasser.OnValue: Chosen option: %d"
+                    args: [i]
+              - globals.set: 
+                  id: global_warmwasserstate
+                  value: !lambda "return i;"
+              # change to program warmwasserstate mode
+              - uart.write:
+                  data: "3506\r\n"
+              # wait 2 seconds
+              - delay: 2s
+              # set new value
+              - uart.write: !lambda |-
+                  char buffer[20];
+                  sprintf(buffer, "3506;1;%d\r\n", i);
+                  std::vector<unsigned char> result(buffer, buffer + strlen(buffer));
+                  return result;              
+              # wait 3 seconds
+              - delay: 3s
+              # save new value
+              - uart.write:
+                  data: "999\r\n"
+              # wait 3 seconds
+              - delay: 3s
+              # get actual warmwasserstate
+              - uart.write:
+                  data: "3505\r\n" 
+            else:
+              - logger.log: "select.mode_warmwasser.OnValue: no change needed"
+      
 sensor:
   - platform: custom
+    id: luxtronik_v1
     lambda: |-
       auto luxtronik_v1 = new luxtronik_v1_sensor(id(uart_bus));
       App.register_component(luxtronik_v1);
@@ -83,45 +209,80 @@ sensor:
         luxtronik_v1->aus_Verdichter_2,
         luxtronik_v1->aus_ZPumpe,
         luxtronik_v1->aus_ZWE,
-        luxtronik_v1->aus_ZWE_Stoerung
+        luxtronik_v1->aus_ZWE_Stoerung,
+        luxtronik_v1->status_Anlagentyp,
+        luxtronik_v1->status_Softwareversion,
+        luxtronik_v1->status_Bivalenzstufe,
+        luxtronik_v1->status_Betriebszustand,
+        luxtronik_v1->modus_Heizung,
+        luxtronik_v1->modus_Warmwasser,
       };
     sensors:
       - name: "WP_Temp_Heizkreis_Ist_Vorlauftemperatur"
         unit_of_measurement: °C
         accuracy_decimals: 1
+        device_class: "temperature"
+        state_class: "measurement"
       - name: "WP_Temp_Heizkreis_Ist_Ruecklauftemperatur"
         unit_of_measurement: °C
         accuracy_decimals: 1
+        device_class: "temperature"
+        state_class: "measurement"
       - name: "WP_Temp_Heizkreis_Soll_Ruecklauftemperatur"
         unit_of_measurement: °C
         accuracy_decimals: 1
+        device_class: "temperature"
+        state_class: "measurement"
       - name: "WP_Temp_Heissgastemperatur"
         unit_of_measurement: °C
         accuracy_decimals: 1
+        device_class: "temperature"
+        state_class: "measurement"
       - name: "WP_Temp_Aussentemperatur"
         unit_of_measurement: °C
         accuracy_decimals: 1
+        device_class: "temperature"
+        state_class: "measurement"
       - name: "WP_Temp_Brauchwarmwasser_Ist_Temperatur"
         unit_of_measurement: °C
         accuracy_decimals: 1
+        device_class: "temperature"
+        state_class: "measurement"
       - name: "WP_Temp_Brauchwarmwasser_Soll_Temperatur"
         unit_of_measurement: °C
         accuracy_decimals: 1
+        device_class: "temperature"
+        state_class: "measurement"
+        on_value: 
+          then:
+            - number.set: 
+                id: WP_Temp_Brauchwarmwasser_SetSoll
+                value: !lambda "return x;"
       - name: "WP_Temp_Waermequellen_Eintrittstemperatur"
         unit_of_measurement: °C
         accuracy_decimals: 1
+        device_class: "temperature"
+        state_class: "measurement"
       - name: "WP_Temp_Waermequellen_Austrittstemperatur"
         unit_of_measurement: °C
         accuracy_decimals: 1
+        device_class: "temperature"
+        state_class: "measurement"
       - name: "WP_Temp_Mischkreis_1_Ist_Vorlauftemperatur"
         unit_of_measurement: °C
         accuracy_decimals: 1
+        device_class: "temperature"
+        state_class: "measurement"
       - name: "WP_Temp_Mischkreis_1_Soll_Vorlauftemperatur"
         unit_of_measurement: °C
         accuracy_decimals: 1
+        device_class: "temperature"
+        state_class: "measurement"
       - name: "WP_Temp_Raumstation"
         unit_of_measurement: °C
         accuracy_decimals: 1
+        device_class: "temperature"
+        state_class: "measurement"
       - name: "WP_Eingaenge_Abtau_Soledruck_Durchfluss"
       - name: "WP_Eingaenge_Sperrzeit_vom_EVU"
       - name: "WP_Eingaenge_Hochdruckpressostat"
@@ -141,8 +302,53 @@ sensor:
       - name: "WP_Ausgaenge_Zusatzumwaelzpumpe_Zirkulationspumpe"
       - name: "WP_Ausgaenge_Zweiter_Waermeerzeuger_1"
       - name: "WP_Ausgaenge_Zweiter_Waermeerzeuger_2_Sammelstoerung"
-                    
-# The wifi_signal sensor platform allows you to read the signal strength of the currently connected WiFi Access Point
+      - name: "WP_Status_Anlagentyp"
+      - name: "WP_Status_Softwareversion"
+        accuracy_decimals: 2
+      - name: "WP_Status_Bivalenzstufe"
+      - name: "WP_Status_Betriebszustand"
+      - name: "WP_Modus_Heizung"
+        on_value:
+          then:
+            - if:
+                condition:
+                  # Should return either true or false
+                  lambda: |-
+                    return (x != id(global_heizungstate));
+                then:
+                  - logger.log:
+                        format: "WP_Modus_Heizung.OnValue: Chosen option: %f"
+                        args: [x]
+                  - globals.set: 
+                      id: global_heizungstate
+                      value: !lambda "return x;"
+                  - select.set_index: 
+                      id: mode_heizung
+                      index: !lambda "return x;"
+                else:
+                  - logger.log: "WP_Modus_Heizung.OnValue: no change needed"
+      - name: "WP_Modus_Warmwasser"
+        on_value:
+          then:
+            - if:
+                condition:
+                  # Should return either true or false
+                  lambda: |-
+                    return (x != id(global_warmwasserstate));
+                then:
+                  - logger.log:
+                        format: "WP_Modus_Warmwasser.OnValue: Chosen option: %f"
+                        args: [x]
+                  - globals.set: 
+                      id: global_warmwasserstate
+                      value: !lambda "return x;"
+                  - select.set_index: 
+                      id: mode_warmwasser
+                      index: !lambda "return x;"
+                else:
+                  - logger.log: "WP_Modus_Warmwasser.OnValue: no change needed"
+
+# The wifi_signal sensor platform allows you to read the signal strength of the currently connected WiFi Access Poin
   - platform: wifi_signal
     name: "WiFi Signal Sensor"
     update_interval: 60s
@@ -154,7 +360,7 @@ sensor:
 binary_sensor:
   - platform: status
     name: "luxtronik_v1"
-    
+
 # Wifi-Information
 text_sensor:
   - platform: wifi_info
