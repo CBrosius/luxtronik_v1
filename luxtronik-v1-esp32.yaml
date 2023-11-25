@@ -22,8 +22,9 @@ logger:
   # level: VERBOSE #makes uart stream available in esphome logstream
   # disable serial loggin
   baud_rate: 0
-  logs:
-    mqtt.component: DEBUG
+#  logs:
+# uncomment if you want to enable mqtt debugging
+#    mqtt.component: DEBUG
   
 ota:
 
@@ -41,22 +42,22 @@ web_server:
 # UART parameters: 57600, 8, N, 1
 # GPIO2 = D2, GPIO4 = D4
 uart:
+  # id (Optional, ID): Manually specify the ID for this UART hub if you need multiple UART hubs
   id: uart_bus
   # debug:
+  # baud_rate (Required, int): The baud rate of the UART bus.
   baud_rate: 57600
   # UART1
-  rx_pin: GPIO2
-  tx_pin: GPIO4
-  # baud_rate (Required, int): The baud rate of the UART bus.
   # rx_pin (Optional, Pin): The pin to receive data on from the ESP’s perspective.
+  rx_pin: GPIO2
   # tx_pin (Optional, Pin): The pin to send data to from the ESP’s perspective.
-  data_bits: 8
+  tx_pin: GPIO4
   #data_bits (Optional, int): The number of data bits used on the UART bus. Options: 5 to 8. Defaults to 8.
+  data_bits: 8
   #parity (Optional): The parity used on the UART bus. Options: NONE, EVEN, ODD. Defaults to NONE.
   parity: NONE
   #stop_bits (Optional, int): The number of stop bits to send. Options: 1, 2. Defaults to 1.
   stop_bits: 1
-  # id (Optional, ID): Manually specify the ID for this UART hub if you need multiple UART hubs
 
 
 # Example configuration entry
@@ -78,13 +79,6 @@ button:
       then:
         - uart.write:
             data: "1100\r\n"
-  - platform: template
-    name: Ask for Heizung State
-    id: ask_for_heizung
-    on_press:
-      then:
-        - uart.write:
-            data: "3405\r\n"
   - platform: template
     name: CheckUART
     id: check_uart
@@ -138,17 +132,41 @@ select:
     optimistic: true
     on_value:
       then:
-        - lambda: |-
-            ESP_LOGD(TAG, "global_heizungstate: %d", id(global_heizungstate));
-            if(i != id(global_heizungstate)){
-              ESP_LOGD(TAG, "global_heizungstate wird gesetzt: %d", i);
-              id(global_heizungstate) = i;
-              auto call = id(mode_heizung).make_call();
-              call.set_index(i);
-              call.perform();
-            }else{
-              ESP_LOGD(TAG, "no change needed");
-            }
+        - if:
+            condition:
+              # Should return either true or false
+              lambda: |-
+                return (i != id(global_heizungstate));
+            then:
+              - logger.log:
+                    format: "select.mode_heizung.OnValue: Chosen option: %d"
+                    args: [i]
+              - globals.set: 
+                  id: global_heizungstate
+                  value: !lambda "return i;"
+              # change to program warmwasserstate mode
+              - uart.write:
+                  data: "3406\r\n"
+              # wait 2 seconds
+              - delay: 2s
+              # set new value
+              - uart.write: !lambda |-
+                  char buffer[20];
+                  sprintf(buffer, "3406;1;%d\r\n", i);
+                  std::vector<unsigned char> result(buffer, buffer + strlen(buffer));
+                  return result;              
+              # wait 3 seconds
+              - delay: 3s
+              # save new value
+              - uart.write:
+                  data: "999\r\n"
+              # wait 3 seconds
+              - delay: 3s
+              # get actual warmwasserstate
+              - uart.write:
+                  data: "3405\r\n" 
+            else:
+              - logger.log: "select.mode_warmwasser.OnValue: no change needed"
 
   - platform: template
     name: Mode Warmwasser
@@ -176,27 +194,29 @@ select:
               - globals.set: 
                   id: global_warmwasserstate
                   value: !lambda "return i;"
+              # change to program warmwasserstate mode
               - uart.write:
-                  data: "3506;1;0\r\n"
-              # 
-              # - uart.write:
-              #     data: "3506;1;0\r\n"
-              # - uart.write:
-              #     data: "999\r\n"
-
+                  data: "3506\r\n"
+              # wait 2 seconds
+              - delay: 2s
+              # set new value
+              - uart.write: !lambda |-
+                  char buffer[20];
+                  sprintf(buffer, "3506;1;%d\r\n", i);
+                  std::vector<unsigned char> result(buffer, buffer + strlen(buffer));
+                  return result;              
+              # wait 3 seconds
+              - delay: 3s
+              # save new value
+              - uart.write:
+                  data: "999\r\n"
+              # wait 3 seconds
+              - delay: 3s
+              # get actual warmwasserstate
+              - uart.write:
+                  data: "3505\r\n" 
             else:
               - logger.log: "select.mode_warmwasser.OnValue: no change needed"
-        # - lambda: |-
-        #     ESP_LOGD(TAG, "global_warmwasserstate: %d", id(global_warmwasserstate));
-        #     if(i != id(global_warmwasserstate)){
-        #       ESP_LOGD(TAG, "global_warmwasserstate wird gesetzt: %d", i);
-        #       id(global_warmwasserstate) = i;
-        #       auto call = id(mode_warmwasser).make_call();
-        #       call.set_index(i);
-        #       call.perform();
-        #     }else{
-        #       ESP_LOGD(TAG, "no change needed");
-        #     }
       
 sensor:
   - platform: custom
@@ -330,24 +350,29 @@ sensor:
       - name: "WP_Ausgaenge_Zweiter_Waermeerzeuger_2_Sammelstoerung"
       - name: "WP_Status_Anlagentyp"
       - name: "WP_Status_Softwareversion"
+        accuracy_decimals: 2
       - name: "WP_Status_Bivalenzstufe"
       - name: "WP_Status_Betriebszustand"
       - name: "WP_Modus_Heizung"
         on_value:
           then:
-            - lambda: |-
-                ESP_LOGD(TAG, "WP_Modus_Heizung->OnValue");
-                ESP_LOGD(TAG, "global_heizungstate: %d", id(global_heizungstate));
-                ESP_LOGD(TAG, "value: %f", x);
-                if(x != id(global_heizungstate)){
-                  ESP_LOGD(TAG, "global_heizungstate wird gesetzt: %f", x);
-                  id(global_heizungstate) = x;
-                  auto call = id(mode_heizung).make_call();
-                  call.set_index(x);
-                  call.perform();
-                }else{
-                  ESP_LOGD(TAG, "no change needed");
-                }
+            - if:
+                condition:
+                  # Should return either true or false
+                  lambda: |-
+                    return (x != id(global_heizungstate));
+                then:
+                  - logger.log:
+                        format: "WP_Modus_Heizung.OnValue: Chosen option: %f"
+                        args: [x]
+                  - globals.set: 
+                      id: global_heizungstate
+                      value: !lambda "return x;"
+                  - select.set_index: 
+                      id: mode_heizung
+                      index: !lambda "return x;"
+                else:
+                  - logger.log: "WP_Modus_Heizung.OnValue: no change needed"
       - name: "WP_Modus_Warmwasser"
         on_value:
           then:
@@ -368,19 +393,6 @@ sensor:
                       index: !lambda "return x;"
                 else:
                   - logger.log: "WP_Modus_Warmwasser.OnValue: no change needed"
-            # - lambda: |-
-            #     ESP_LOGD(TAG, "WP_Modus_Warmwasser->OnValue");
-            #     ESP_LOGD(TAG, "global_warmwasserstate: %d", id(global_warmwasserstate));
-            #     ESP_LOGD(TAG, "value: %f", x);
-            #     if(x != id(global_warmwasserstate)){
-            #       ESP_LOGD(TAG, "global_warmwasserstate wird gesetzt: %f", x);
-            #       id(global_warmwasserstate) = x;
-            #       auto call = id(mode_warmwasser).make_call();
-            #       call.set_index(x);
-            #       call.perform();
-            #     }else{
-            #       ESP_LOGD(TAG, "no change needed");
-            #     }
 
 # The wifi_signal sensor platform allows you to read the signal strength of the currently connected WiFi Access Poin
   - platform: wifi_signal
