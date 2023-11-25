@@ -12,8 +12,8 @@ HowTo:
 3. Compile and Upload to your Sensor
 
 ToDo:
-- more Documentation
-- Write-Acess to some of the values
+- more Documentation (Work in Progress)
+- Write-Acess to some of the values (Work in Progress)
 
 
 # German Version
